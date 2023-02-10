@@ -1,0 +1,36 @@
+FROM docker.io/golang:1.19.4 AS builder
+
+ARG UID="1001"
+ARG GID="1001"
+ARG USER="webhooks"
+ARG GROUP="webhooks"
+ARG USER_AGENT_HOME="/home/$USER"
+
+ENV USER=$USER
+ENV GROUP=$GROUP
+ENV UID=$UID
+ENV GID=$GID
+ENV USER_AGENT_HOME=$USER_AGENT_HOME
+
+RUN groupadd --gid $GID $GROUP \
+    && useradd --uid $UID --gid $GID -m $USER_AGENT_HOME $USER
+
+WORKDIR $USER_AGENT_HOME
+
+COPY . .
+
+RUN CGO_ENABLED=0 go build -o $USER_AGENT_HOME/app
+
+FROM gcr.io/distroless/static-debian11 AS runner
+
+ARG UID="1001"
+ARG GID="1001"
+ARG USER="webhooks"
+ARG USER_AGENT_HOME="/home/$USER"
+
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder --chown=$UID:$GID $USER_AGENT_HOME/app $USER_AGENT_HOME/app
+
+USER $UID
+
+ENTRYPOINT [ "$USER_AGENT_HOME/app" ]
