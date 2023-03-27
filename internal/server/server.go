@@ -50,8 +50,24 @@ func serveNoDefaultNamespace(w http.ResponseWriter, req *http.Request) {
 	serve(w, req, webhook.NewDelegateToV1AdmitHandler(webhook.AdmitNoDefault))
 }
 
+func printConfig() {
+	klog.Info("Printing configuration...")
+	klog.Infof("CertFile: [%s]", config.getCertFile())
+	klog.Infof("KeyFile: [%s]", config.getKeyFile())
+	klog.Infof("Message: [%s]", config.getMessage())
+	klog.Infof("Port: [%d]", config.getPort())
+}
+
 func Run() {
 	config = newConfig()
+
+	printConfig()
+
+	// wrapipng this in an if statement rather than checking on each call to klog
+	// for brevity's sake and because why perform those extra checks?
+	// if klog.V(2).Enabled() {
+	// 	printConfig()
+	// }
 
 	// message = "Hello World!"
 
@@ -77,7 +93,7 @@ func Run() {
 		klog.Info("Certificate infromation identified, serving with TLS enabled...")
 		// future state: serve with TLS
 		server := &http.Server{
-			Addr: fmt.Sprintf(":%d", config.getPort()),
+			Addr:      fmt.Sprintf(":%d", config.getPort()),
 			TLSConfig: LoadTLSCerts(config.getCertFile(), config.getKeyFile()),
 		}
 		err = server.ListenAndServeTLS("", "")

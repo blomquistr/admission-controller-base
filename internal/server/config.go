@@ -14,7 +14,6 @@ package server
 
 import (
 	"github.com/spf13/viper"
-	"k8s.io/klog/v2"
 )
 
 type IConfig interface {
@@ -31,8 +30,8 @@ type IConfig interface {
 type Config struct {
 	CertFile string
 	KeyFile  string
-	Message string
-	Port int
+	Message  string
+	Port     int
 }
 
 func (c *Config) getCertFile() string {
@@ -69,17 +68,6 @@ func (c *Config) setPort(port int) {
 
 func newConfig() IConfig {
 	// set viper config defaults
-	setConfigDefaults()
-
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// config file is not found, ignore the error
-		} else {
-			// config file was found, but malformed
-			klog.Fatal(ok)
-		}
-	}
-
 	return &Config{
 		CertFile: viper.GetString("certFile"),
 		KeyFile:  viper.GetString("keyFile"),
