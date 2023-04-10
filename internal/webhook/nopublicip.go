@@ -13,22 +13,34 @@
 package webhook
 
 import (
-	"os"
-	"strings"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 
 	v1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
 
-var (
-	cloudProvider string = os.Getenv("CLOUD_PROVIDER")
-)
-
 const (
-	addAnnotationsAndAzureLabelPatch string = `[
+	// AWS annotations and labels
+	awsInternalLoadBalancerAnnotation      string = "service.beta.kubernetes.io/aws-load-balancer-scheme"
+	awsInternalLoadBalancerAnnotationValue string = "internal"
+	addAnnotationsAndAWSLabelPatch         string = `[
+		{ "op": "add", "path", "/metadata/annotations", "value": {"service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"}}
+	]`
+	addAWSAnnotationPatch string = `[
+		{ "op": "add", "path", "/metadata/annotations/service.beta.kubernetes.io/aws-load-balancer-scheme", "value": "internal" }
+	]`
+	setAWSAnnotationTruePatch string = `[
+		{ "op": "replace", "path": "/metadata/labels/service.beta.kubernetes.io/aws-load-balancer-scheme", "value": "internal" }
+	]`
+
+	// Azure annotations and labels
+	azureInternalLoadBalancerAnnotation      string = "service.beta.kubernetes.io/azure-load-balancer-internal"
+	azureInternalLoadBalancerAnnotationValue string = "true"
+	addAnnotationsAndAzureLabelPatch         string = `[
 		{ "op": "add", "path", "/metadata/annotations", "value": {"service.beta.kubernetes.io/azure-load-balancer-internal: "true"}}
 	]`
 	addAzureAnnotationPatch string = `[
@@ -37,15 +49,79 @@ const (
 	setAzureAnnotationTruePatch string = `[
 		{ "op": "replace", "path": "/metadata/labels/service.beta.kubernetes.io/azure-load-balancer-internal", "value": "true" }
 	]`
+
+	// GCP/GKE annotations and labels
+	gcpInternalLoadBalancerAnnotation      string = "networking.gke.io/load-balancer-type"
+	gcpInternalLoadBalancerAnnotationValue string = "internal"
+	addAnnotationsAndGCPLabelPatch         string = `[
+		{ "op": "add", "path", "/metadata/annotations", "value": {"networking.gke.io/load-balancer-type: "internal"}}
+	]`
+	addGCPAnnotationPatch string = `[
+		{ "op": "add", "path", "/metadata/annotations/networking.gke.io/load-balancer-type", "value": "internal" }
+	]`
+	setGCPAnnotationTruePatch string = `[
+		{ "op": "replace", "path": "/metadata/labels/networking.gke.io/load-balancer-type", "value": "internal" }
+	]`
 )
 
-/* This function checks that any service of type LoadBalancer has the Azure-specific annotation preventing them from
-generating a public IP address. */
+type cloudProviderAnnotation struct {
+	Annotation             string
+	AnnotationValue        string
+	AddAnnotationsAndPatch string
+	AddAnnotationPatch     string
+	SetAnnotationPatch     string
+}
+
+var (
+	cloudProvider         string                  = os.Getenv("CLOUD_PROVIDER")
+	annotationsCollection cloudProviderAnnotation = newCloudProviderAnnotation()
+)
+
+func newCloudProviderAnnotation() cloudProviderAnnotation {
+	annotationsCollection := cloudProviderAnnotation{}
+	switch {
+	case strings.ToLower(cloudProvider) == "aws":
+		annotationsCollection.Annotation = awsInternalLoadBalancerAnnotation
+		annotationsCollection.AnnotationValue = awsInternalLoadBalancerAnnotationValue
+		annotationsCollection.AddAnnotationsAndPatch = addAnnotationsAndAWSLabelPatch
+		annotationsCollection.AddAnnotationPatch = addAWSAnnotationPatch
+		annotationsCollection.SetAnnotationPatch = setAWSAnnotationTruePatch
+	case strings.ToLower(cloudProvider) == "azure":
+		annotationsCollection.Annotation = azureInternalLoadBalancerAnnotation
+		annotationsCollection.AnnotationValue = azureInternalLoadBalancerAnnotationValue
+		annotationsCollection.AddAnnotationsAndPatch = addAnnotationsAndAzureLabelPatch
+		annotationsCollection.AddAnnotationPatch = addAzureAnnotationPatch
+		annotationsCollection.SetAnnotationPatch = setAzureAnnotationTruePatch
+	case strings.ToLower(cloudProvider) == "gcp":
+		annotationsCollection.Annotation = gcpInternalLoadBalancerAnnotation
+		annotationsCollection.AnnotationValue = gcpInternalLoadBalancerAnnotationValue
+		annotationsCollection.AddAnnotationsAndPatch = addAnnotationsAndGCPLabelPatch
+		annotationsCollection.AddAnnotationPatch = addGCPAnnotationPatch
+		annotationsCollection.SetAnnotationPatch = setGCPAnnotationTruePatch
+	default:
+		err := fmt.Errorf("unexpected cloud provider configuration: got [%s], expected one of [Azure, AWS, GCP]", cloudProvider)
+		klog.Error(err)
+	}
+	return annotationsCollection
+}
+
+/*
+	This function checks that any service of type LoadBalancer has the Azure-specific annotation preventing them from
+
+generating a public IP address.
+*/
 func NoExternalIpLoadBalancers(ar v1.AdmissionReview) *v1.AdmissionResponse {
 	klog.V(2).Info("Testing load balancer for public IP addresses...")
 
-	reviewResponse := v1.AdmissionResponse{}
-	reviewResponse.Allowed = true
+	// on each request, check that we're configured with a valid cloud provider and, if not, return an error
+	if len(annotationsCollection.Annotation) == 0 {
+		err := fmt.Errorf("unexpected cloud provider configuration: got [%s], expected one of [Azure, AWS, GCP]", cloudProvider)
+		klog.Error(err)
+		return toV1AdmissionResponse(err)
+	}
+	reviewResponse := v1.AdmissionResponse{
+		Allowed: true,
+	}
 
 	obj := struct {
 		metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -56,25 +132,16 @@ func NoExternalIpLoadBalancers(ar v1.AdmissionReview) *v1.AdmissionResponse {
 		klog.Error(err)
 	}
 	pt := v1.PatchTypeJSONPatch
-	var labelValue string
-	hasLabel := false
-	switch {
-	case strings.ToLower(cloudProvider) == "azure":
-		labelValue, hasLabel = obj.ObjectMeta.Annotations["service.beta.kubernetes.io/azure-load-balancer-internal"]
-	default:
-		err := fmt.Errorf("unexpected cloud provider configuration: got [%s], expected one of [Azure, AWS, GCP]", cloudProvider)
-		klog.Error(err)
-		return toV1AdmissionResponse(err)
-	}
+	labelValue, hasLabel := obj.ObjectMeta.Annotations[annotationsCollection.Annotation]
 	switch {
 	case len(obj.ObjectMeta.Annotations) == 0:
-		reviewResponse.Patch = []byte(addAnnotationsAndAzureLabelPatch)
+		reviewResponse.Patch = []byte(annotationsCollection.AddAnnotationsAndPatch)
 		reviewResponse.PatchType = &pt
 	case !hasLabel:
-		reviewResponse.Patch = []byte(addAzureAnnotationPatch)
+		reviewResponse.Patch = []byte(annotationsCollection.AddAnnotationPatch)
 		reviewResponse.PatchType = &pt
-	case labelValue != "true":
-		reviewResponse.Patch = []byte(setAzureAnnotationTruePatch)
+	case labelValue != annotationsCollection.AnnotationValue:
+		reviewResponse.Patch = []byte(annotationsCollection.SetAnnotationPatch)
 		reviewResponse.PatchType = &pt
 	default:
 		// none - already set

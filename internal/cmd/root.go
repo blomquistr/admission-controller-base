@@ -45,9 +45,9 @@ func init() {
 
 	// flag config - the path to the config file
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "a configuration file to use to start the server (defaults to $HOME/.webhook/server.yml)")
-	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
-	viper.BindEnv("config", fmt.Sprintf("%s_CONFIG_FILE_PATH", strings.ToUpper(configPrefix)))
-	viper.SetDefault("config", "$HOME/.admission-controller-base/config")
+	viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config")) // binds the PFlag to a Viper config value
+	viper.BindEnv("config", fmt.Sprintf("%s_CONFIG_FILE_PATH", strings.ToUpper(configPrefix))) // binds an environment variable to the Viper config value
+	viper.SetDefault("config", "$HOME/.admission-controller-base/config") // sets a default for the config value
 
 	// flag cert-file, the path to the TLS cert
 	rootCmd.PersistentFlags().StringVar(&certFile, "cert-file", "", "the path to a valid TLS certificate file")
