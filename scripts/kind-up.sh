@@ -22,7 +22,7 @@ if [[ "$(podman machine inspect --format '{{.State}}' ${PODMAN_MACHINE_VM_NAME} 
 fi
 
 # first we'll create our registry, using the specified name and port if it's not already there
-if [[ "$(podman inspect -f '{{.State.Running}}' registry 2>/dev/null || true)" == 'true' ]]; then
+if [[ "$(podman inspect -f '{{.State.Running}}' registry 2>/dev/null || echo 'true')" == 'true' ]]; then
   echo "Starting a local container registry on podman machine ${PODMAN_MACHINE_VM_NAME} as ${REGISTRY_NAME}"
   podman run -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:5000" --name "${REGISTRY_NAME}" "${REGISTRY_IMAGE}"
 fi
@@ -80,7 +80,7 @@ nodes:
 EOF
 
 # now we need to connect the virtual networks between the running Kind cluster, which is really just containers, and the Registry container, which is also... just a container
-if [[ "$(podman inspect --format '{{json .NetworkSettings.Networks.kind}}' ${REGISTRY_NAME})" = 'null' ]]; then
+if [[ "$(podman inspect --format '{{json .NetworkSettings.Networks.kind}}' ${REGISTRY_NAME})" == 'null' ]]; then
   podman network connect "kind" "${REGISTRY_NAME}"
 fi
 
