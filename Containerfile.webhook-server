@@ -13,7 +13,7 @@ ENV GID=$GID
 ENV USER_AGENT_HOME=$USER_AGENT_HOME
 
 RUN groupadd --gid $GID $GROUP \
-    && useradd --uid $UID --gid $GID -m $USER_AGENT_HOME $USER
+    && useradd --uid $UID --gid $GID -d $USER_AGENT_HOME -m -s /bin/bash $USER
 
 WORKDIR $USER_AGENT_HOME
 

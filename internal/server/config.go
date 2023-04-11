@@ -77,8 +77,8 @@ func newConfig() IConfig {
 }
 
 func setConfigDefaults() {
-	viper.SetDefault("certFile", "")
-	viper.SetDefault("keyFile", "")
+	viper.SetDefault("cert-file", "")
+	viper.SetDefault("key-file", "")
 	viper.SetDefault("message", "Hello World!")
 	viper.SetDefault("port", 5001)
 }

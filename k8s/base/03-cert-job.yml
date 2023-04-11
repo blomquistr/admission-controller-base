@@ -1,0 +1,120 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: webhook-certificate-create
+  namespace: k8s-cloud-system
+  labels:
+    k8s.mrll.com/app: k8s-cloud-system
+    k8s.mrll.com/component: webhook-certificate
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: webhook-certificate-admission-create
+      labels:
+        k8s.mrll.com/app: k8s-cloud-system
+        k8s.mrll.com/component: webhook-certificate
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: kubernetes.azure.com/mode
+                    operator: In
+                    values:
+                      - system
+              weight: 1
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: kubernetes.azure.com/scalesetpriority
+          value: "spot"
+          operator: "Equal"
+          effect: "NoSchedule"
+      containers:
+        - name: create
+          image: "k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.1.1@sha256:64d8c73dca984af206adf9d6d7e46aa550362b1d7a01f3a0a91b20cc67868660"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "create"
+            - "--host=k8s-cloud-webhooks,k8s-cloud-webhooks.$(POD_NAMESPACE).svc,k8s-cloud-webhooks.$(POD_NAMESPACE).svc.cluster.local"
+            - "--namespace=$(POD_NAMESPACE)"
+            - "--secret-name=k8s-cloud-system-webhook-ca-bundle"
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      restartPolicy: OnFailure
+      serviceAccountName: k8s-cloud-webhooks
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: webhook-certificate-patch
+  namespace: k8s-cloud-system
+  labels:
+    k8s.mrll.com/app: k8s-cloud-system
+    k8s.mrll.com/component: webhook-certificate
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      name: webhook-certificate-admission-patch
+      labels:
+        k8s.mrll.com/app: k8s-cloud-system
+        k8s.mrll.com/component: webhook-certificate
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: kubernetes.azure.com/mode
+                    operator: In
+                    values:
+                      - system
+              weight: 1
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: kubernetes.azure.com/scalesetpriority
+          value: "spot"
+          operator: "Equal"
+          effect: "NoSchedule"
+      containers:
+        - name: create
+          image: "k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.1.1@sha256:64d8c73dca984af206adf9d6d7e46aa550362b1d7a01f3a0a91b20cc67868660"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "patch"
+            - "--namespace=$(POD_NAMESPACE)"
+            - "--secret-name=k8s-cloud-system-webhook-ca-bundle"
+            - "--patch-failure-policy=Fail"
+            - "--patch-mutating=true"
+            - "--patch-validating=true"
+            - "--webhook-name=k8s-cloud-system"
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      restartPolicy: OnFailure
+      serviceAccountName: k8s-cloud-webhooks
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 2000

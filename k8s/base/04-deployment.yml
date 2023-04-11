@@ -1,0 +1,223 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-cloud-system
+  namespace: k8s-cloud-system
+  labels:
+    k8s.mrll.com/app: k8s-cloud-system
+    k8s.mrll.com/component: webhook-server
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      k8s.mrll.com/app: k8s-cloud-system
+      k8s.mrll.com/component: webhook-server
+  template:
+    metadata:
+      labels:
+        k8s.mrll.com/app: k8s-cloud-system
+        k8s.mrll.com/component: webhook-server
+    spec:
+      serviceAccountName: k8s-cloud-system
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: agentpool
+                    operator: In
+                    values:
+                      - defaultpool
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: kubernetes.azure.com/mode
+                    operator: In
+                    values:
+                      - system
+              weight: 100
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+                labelSelector:
+                  matchExpressions:
+                    - key: k8s.mrll.com/app
+                      operator: In
+                      values:
+                        - k8s-cloud-system
+                    - key: k8s.mrll.com/component
+                      operator: In
+                      values:
+                        - webhook-server
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+        - key: kubernetes.azure.com/scalesetpriority
+          value: "spot"
+          operator: "Equal"
+          effect: NoSchedule
+        - key: k8s.mrll.com/system-pool
+          value: "true"
+          effect: NoSchedule
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+        - name: webhook-config
+          configMap:
+            name: webhook-config
+        - name: tls-secret
+          secret:
+            secretName: k8s-cloud-system-ca-bundle
+        - name: k8s-cloud-system-soteria-cert
+          secret:
+            secretName: k8s-cloud-system-soteria-cert
+        - name: dhparam-secret
+          secret:
+            secretName: k8s-cloud-system-dhparam
+      imagePullSecrets:
+        - name: mrllus2pacr
+        - name: harbor
+      containers:
+        - name: nginx-server
+          image: nginx:1.23.1
+          imagePullPolicy: Always
+          # command: ["/bin/bash", "-c", "sleep 60000"]
+          command:
+            - "nginx"
+            - "-g"
+            - "daemon off;"
+          # TODO: enable the nginx_status page and send the liveness probe to it
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          env:
+            - name: INSTANA_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: INSTANA_SERVICE_NAME
+              value: k8s-cloud-system
+            - name: AUTOWRAPT_BOOTSTRAP
+              value: instana
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "500m"
+            requests:
+              memory: 512Mi
+              cpu: "500m"
+          volumeMounts:
+            - name: tls-secret
+              mountPath: /mnt/certs/incluster
+              readOnly: true
+            - name: dhparam-secret
+              mountPath: /mnt/certs/dhparam
+              readOnly: true
+            - name: k8s-cloud-system-soteria-cert
+              mountPath: /mnt/certs/soteria
+              readOnly: true
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: nginx-config
+              mountPath: /etc/nginx/ssl.conf
+              subPath: ssl.conf
+            - name: webhook-config
+              mountPath: /etc/nginx/conf.d
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+        - name: k8s-cloud-system
+          image: ${DOCKER_REGISTRY_PATH}/k8s-cloud-system:${GIT_DESCRIBE}
+          livenessProbe:
+            httpGet:
+              path: /ping/
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ping/
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          # lifecycle:
+          #   postStart:
+          #     httpGet:
+          #       path: /start/
+          #       port: 5000
+          #   preStop:
+          #     httpGet:
+          #       path: /stop/
+          #       port: 5000
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: "500m"
+            requests:
+              memory: 512Mi
+              cpu: "500m"
+          envFrom:
+            - configMapRef:
+                name: k8s-cloud-system-env
+            - configMapRef:
+                name: k8s-cloud-system-slack-config
+            - configMapRef:
+                name: k8s-cloud-system-dns-config
+            - secretRef:
+                name: k8s-cloud-system-slack-config
+            - secretRef:
+                name: k8s-cloud-system-dns-config
+          env:
+            - name: INSTANA_SERVICE_NAME
+              value: k8s-cloud-system
+            - name: AUTOWRAPT_BOOTSTRAP
+              value: instana
+            - name: INSTANA_AGENT_HOST
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: CLUSTER_WEBHOOK_CA_BUNDLE
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-cloud-system-ca-bundle
+                  key: ca
+                  optional: false
+          ports:
+            - containerPort: 5000
+          # command: ["bash", "-c", "while true; do clear; sleep 60000; done"]
+          command:
+            [
+              "bash",
+              "-c",
+              "uwsgi --ini k8s_cloud_webhooks/app_wsgi.ini --listen 2048",
+            ]
+          imagePullPolicy: Always
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: k8s-cloud-system
+  namespace: k8s-cloud-system
+  labels:
+    k8s.mrll.com/app: k8s-cloud-system
+    k8s.mrll.com/component: server-pod-disruption-budget
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      k8s.mrll.com/app: k8s-cloud-system
+      k8s.mrll.com/component: webhook-server
