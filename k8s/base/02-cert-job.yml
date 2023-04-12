@@ -30,7 +30,7 @@ spec:
           imagePullPolicy: IfNotPresent
           args:
             - "create"
-            - "--host=k8s-cloud-webhooks,k8s-cloud-webhooks.$(POD_NAMESPACE).svc,k8s-cloud-webhooks.$(POD_NAMESPACE).svc.cluster.local"
+            - "--host=k8s-cloud-system,k8s-cloud-system.$(POD_NAMESPACE).svc,k8s-cloud-system.$(POD_NAMESPACE).svc.cluster.local"
             - "--namespace=$(POD_NAMESPACE)"
             - "--secret-name=k8s-cloud-system-webhook-ca-bundle"
           env:

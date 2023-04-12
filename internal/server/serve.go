@@ -9,14 +9,16 @@ import (
 	v1 "k8s.io/api/admission/v1"
 	"k8s.io/api/admission/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2"
 
 	webhook "github.com/blomquistr/admission-controller-base/internal/webhook"
 )
 
-/* Method to handle the HTTP portion of requests from the API server, before it hands
-the request off to the admitHandler `admit` */
+/*
+	Method to handle the HTTP portion of requests from the API server, before it hands
+
+the request off to the admitHandler `admit`
+*/
 func serve(w http.ResponseWriter, r *http.Request, admit webhook.AdmitHandler) {
 	var body []byte
 	if r.Body != nil {
@@ -45,7 +47,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit webhook.AdmitHandler) {
 	Go objects to be operated on by the rest of your application. It loads
 	all the known client-go object types for Kubernetes, but won't work on
 	custom resources */
-	deserializer := scheme.Codecs.UniversalDeserializer()
+	deserializer := codecs.UniversalDeserializer()
 	obj, gvk, err := deserializer.Decode(body, nil, nil)
 	if err != nil {
 		msg := fmt.Sprintf("Request could not be decoded: %v", err)
@@ -58,7 +60,7 @@ func serve(w http.ResponseWriter, r *http.Request, admit webhook.AdmitHandler) {
 	version, and Kind of the request - we'll send a v1 response if the request is
 	a v1 request, and a v1beta1 response if the request is a v1beta1 request. In
 	either case, responseObj will be valid for the request that's been submitted.
-	
+
 	Our response object is the admit handler passed to the initial method call. It
 	must return a valid response object, formatted appropriately for either the v1
 	or v1beta1 APIs, in jsonpatch format. We'll call the Struct's v1 endpoint in

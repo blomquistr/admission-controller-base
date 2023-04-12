@@ -1,0 +1,11 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-cloud-system-webhook-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: webhook-server
+          resources: {}

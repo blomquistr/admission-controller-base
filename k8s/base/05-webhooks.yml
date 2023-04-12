@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: kubectl
 webhooks:
   - name: no-default-namespaced-resources.k8s-cloud-system.k8s.mrll.com
-    admissionReviewVersions: ["v1", "v1beta1"]
+    admissionReviewVersions: ["v1beta1", "v1"]
     namespaceSelector:
       matchExpressions:
         - key: "control-plane"
@@ -86,7 +86,7 @@ metadata:
     app.kubernetes.io/managed-by: kubectl
 webhooks:
   - name: no-external-ip-load-balancers.k8s-cloud-system.k8s.mrll.com
-    admissionReviewVersions: ["v1", "v1beta1"]
+    admissionReviewVersions: ["v1beta1", "v1"]
     namespaceSelector:
       matchExpressions:
         - key: "control-plane"

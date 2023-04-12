@@ -59,19 +59,19 @@ spec:
             secretName: k8s-cloud-system-webhook-ca-bundle
       containers:
         - name: webhook-server
-          image: localhost:5001/admission-controller-base/webhook-server-debug:7f764b5
-          # livenessProbe:
-          #   httpGet:
-          #     path: /ping
-          #     port: 5000
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 15
-          # readinessProbe:
-          #   httpGet:
-          #     path: /readyz
-          #     port: 5000
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 15
+          image: localhost:5001/admission-controller-base/webhook-server-debug:4ac1285-dirty
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 15
           resources:
             limits:
               memory: 512Mi
