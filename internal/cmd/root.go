@@ -14,13 +14,14 @@ import (
 
 var (
 	// Used for flags
-	cfgFile      string
-	certFile     string
-	keyFile      string
-	message      string
-	httpPort     int    = 8080
-	httpsPort    int    = 8443
-	configPrefix string = "webhook"
+	cfgFile       string
+	certFile      string
+	keyFile       string
+	message       string
+	httpPort      int    = 8080
+	httpsPort     int    = 8443
+	configPrefix  string = "webhook"
+	cloudProvider string = "azure" // it's the current standard where I work
 
 	// the actual command
 	rootCmd = &cobra.Command{
@@ -73,6 +74,12 @@ func init() {
 	viper.BindPFlag("https-port", rootCmd.PersistentFlags().Lookup("https-port"))
 	viper.BindEnv("https-port", fmt.Sprintf("%s_HTTPS_PORT", strings.ToUpper(configPrefix)))
 	viper.SetDefault("https-port", 8443)
+
+	// flag cloud-provider; set the cloud provider the admission controller is running on
+	rootCmd.PersistentFlags().StringVar(&cloudProvider, "cloud-provider", "azure", "The cloud provider the admission controller is running on")
+	viper.BindPFlag("cloud-provider", rootCmd.PersistentFlags().Lookup("cloud-provider"))
+	viper.BindEnv("cloud-provider", fmt.Sprintf("%s_CLOUD_PROVIDER", strings.ToUpper(configPrefix)))
+	viper.SetDefault("cloud-provider", "azure")
 
 	// flag message - a test message for passing around the app, basically hello-world for configuration in Viper and Cobra
 	rootCmd.PersistentFlags().StringVar(&message, "message", "Hello, World!", "A message to pass to the application's test endpoint to validate that it is working")

@@ -15,9 +15,9 @@ package webhook
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
@@ -73,7 +73,8 @@ type cloudProviderAnnotation struct {
 }
 
 var (
-	cloudProvider         string                  = os.Getenv("CLOUD_PROVIDER")
+	// cloudProvider         string                  = os.Getenv("CLOUD_PROVIDER")
+	cloudProvider         string                  = viper.GetString("cloudProvider")
 	annotationsCollection cloudProviderAnnotation = newCloudProviderAnnotation()
 )
 

@@ -7,11 +7,13 @@ require (
 	github.com/spf13/viper v1.14.0
 	k8s.io/api v0.26.0
 	k8s.io/apimachinery v0.26.0
-	k8s.io/client-go v0.26.0
 	k8s.io/klog/v2 v2.80.1
 )
 
+require github.com/pkg/errors v0.9.1 // indirect
+
 require (
+	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect

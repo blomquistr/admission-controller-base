@@ -12,6 +12,12 @@ patches:
       kind: Deployment
       name: k8s-cloud-system-webhook-server
       namespace: k8s-cloud-system
+  - path: config-aks.yml
+    target:
+      version: v1
+      kind: ConfigMap
+      name: k8s-cloud-system-webhook-server
+      namespace: k8s-cloud-system
   - path: job-tolerations.yml
     target:
       group: batch
