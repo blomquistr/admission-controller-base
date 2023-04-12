@@ -69,7 +69,7 @@ func init() {
 	viper.SetDefault("http-port", 5001)
 
 	// flag https-port - the port the app should listen on in its environment
-	rootCmd.PersistentFlags().IntVar(&httpsPort, "http-port", 8443, "A port to run the server on (defaults to 5001)")
+	rootCmd.PersistentFlags().IntVar(&httpsPort, "https-port", 8443, "A port to run the server on (defaults to 5001)")
 	viper.BindPFlag("https-port", rootCmd.PersistentFlags().Lookup("https-port"))
 	viper.BindEnv("https-port", fmt.Sprintf("%s_HTTPS_PORT", strings.ToUpper(configPrefix)))
 	viper.SetDefault("https-port", 8443)
