@@ -59,7 +59,7 @@ spec:
             secretName: k8s-cloud-system-webhook-ca-bundle
       containers:
         - name: webhook-server
-          image: localhost:5001/admission-controller-base/webhook-server-debug:4ac1285-dirty
+          image: localhost:5001/admission-controller-base/webhook-server-debug:dc67cc7
           livenessProbe:
             httpGet:
               path: /ping
