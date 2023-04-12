@@ -36,4 +36,4 @@ COPY --from=builder --chown=$UID:$GID $WORKDIR/bin/* $WORKDIR/bin/
 
 USER $UID
 
-ENTRYPOINT [ "$USER_AGENT_HOME/bin/app" ]
+ENTRYPOINT [ "/bin/bash", "-c", "./bin/webhook-server.exe" ]

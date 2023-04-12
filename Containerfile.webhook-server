@@ -5,6 +5,7 @@ ARG GID="1001"
 ARG USER="webhooks"
 ARG GROUP="webhooks"
 ARG USER_AGENT_HOME="/home/$USER"
+ARG WORKDIR="/usr/src/app"
 
 ENV USER=$USER
 ENV GROUP=$GROUP
@@ -15,22 +16,24 @@ ENV USER_AGENT_HOME=$USER_AGENT_HOME
 RUN groupadd --gid $GID $GROUP \
     && useradd --uid $UID --gid $GID -d $USER_AGENT_HOME -m -s /bin/bash $USER
 
-WORKDIR $USER_AGENT_HOME
+WORKDIR $WORKDIR
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -o $USER_AGENT_HOME/bin/app
+RUN mkdir bin; CGO_ENABLED=0 go build -o bin/webhook-server.exe
 
 FROM gcr.io/distroless/static-debian11 AS runner
 
 ARG UID="1001"
 ARG GID="1001"
 ARG USER="webhooks"
-ARG USER_AGENT_HOME="/home/$USER"
+ARG WORKDIR="/usr/src/app"
+
+WORKDIR $WORKDIR
 
 COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder --chown=$UID:$GID $USER_AGENT_HOME/bin $USER_AGENT_HOME/bin
+COPY --from=builder --chown=$UID:$GID $WORKDIR/bin/* $WORKDIR/bin/
 
 USER $UID
 
-ENTRYPOINT [ "$USER_AGENT_HOME/bin/app" ]
+ENTRYPOINT [ "bin/webhook-server.exe --cert-file $WEBHOOK_CERT_FILE_PATH --key-file $WEBHOOK_KEY_FILE_PATH --message $WEBHOOK_MESSAGE" ]

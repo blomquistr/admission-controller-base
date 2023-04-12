@@ -80,7 +80,7 @@ nodes:
 EOF
 
 # now we need to connect the virtual networks between the running Kind cluster, which is really just containers, and the Registry container, which is also... just a container
-if [[ "$(podman inspect --format '{{json .NetworkSettings.Networks.kind}}' ${REGISTRY_NAME})" == 'null' ]]; then
+if [[ "$(podman inspect --format '{{json .NetworkSettings.Networks.kind}}' ${REGISTRY_NAME} 2>/dev/null || echo 'null')" == 'null' ]]; then
   podman network connect "kind" "${REGISTRY_NAME}"
 fi
 

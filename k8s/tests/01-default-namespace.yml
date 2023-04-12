@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: default-pod
+  namespace: default
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: busybox:latest
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "while true; do clear; sleep 6000; done"
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: namespaced-pod
+  namespace: k8s-cloud-system
+  labels:
+    name: myapp
+spec:
+  containers:
+    - name: myapp
+      image: busybox:latest
+      command:
+        - "/bin/bash"
+        - "-c"
+        - "while true; do clear; sleep 6000; done"

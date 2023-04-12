@@ -1,0 +1,28 @@
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-cloud-system-webhook-server
+  namespace: k8s-cloud-system
+  labels:
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: webhook-server-external-traffic
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: k8s-cloud-system
+                port:
+                  number: 5000

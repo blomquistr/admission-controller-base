@@ -1,0 +1,18 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: k8s-cloud-system
+  namespace: k8s-cloud-system
+  labels:
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: webhook-server
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      k8s.mrll.com/app: k8s-cloud-system
+      k8s.mrll.com/component: webhook-server

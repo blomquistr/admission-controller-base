@@ -5,8 +5,11 @@ metadata:
   name: k8s-cloud-system
   namespace: k8s-cloud-system
   labels:
-    k8s.mrll.com/app: k8s-cloud-system
-    k8s.mrll.com/component: service-account
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: rbac-service-account
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -14,8 +17,11 @@ kind: ClusterRole # DNS records are a cluster-level resource
 metadata:
   name: k8s-cloud-system
   labels:
-    k8s.mrll.com/app: k8s-cloud-system
-    k8s.mrll.com/component: webhook-server
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: rbac-service-account
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
 rules:
   - apiGroups: ["dns.k8s.mrll.com"]
     resources: ["arecords", "cnames"]
@@ -30,6 +36,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: k8s-cloud-system
+  labels:
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: rbac-roles
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
 roleRef:
   kind: ClusterRole
   name: k8s-cloud-system
@@ -46,8 +58,11 @@ metadata:
   name: k8s-cloud-system-ca-bundle
   namespace: k8s-cloud-system
   labels:
-    k8s.mrll.com/app: k8s-cloud-system
-    k8s.mrll.com/component: webhook-server
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: rbac-roles-ca-bundle
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -60,8 +75,11 @@ metadata:
   name: k8s-cloud-system-ca-bundle
   namespace: k8s-cloud-system
   labels:
-    k8s.mrll.com/app: k8s-cloud-system
-    k8s.mrll.com/component: webhook-server
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: rbac-roles-ca-bundle
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
 roleRef:
   kind: Role
   name: k8s-cloud-system-ca-bundle

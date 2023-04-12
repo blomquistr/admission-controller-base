@@ -88,25 +88,41 @@ func Run() {
 	so we'll just use an IIFE (immediately instantiated function expression) */
 	http.HandleFunc("/readyz", readyzHandler)
 
-	var err error // not sure if this is technically required, or if go can handle just defining err in the if/else
 	if config.getCertFile() != "" && config.getKeyFile() != "" {
+		/* In order to serve both readiness/liveness probes over HTTP and the mutating
+		admission controller over https, we need to start the HTTP server in a goroutine
+		and then the HTTPS server in the main process. */
 		klog.Info("Certificate infromation identified, serving with TLS enabled...")
-		// future state: serve with TLS
-		server := &http.Server{
+		go func() {
+			http_server := &http.Server{
+				Addr: fmt.Sprintf(":%d", config.getPort()),
+			}
+			http_err := http_server.ListenAndServe()
+			if http_err != nil {
+				klog.Fatalf("HTTP Web Server Error: [%s]", http_err.Error())
+			}
+		}()
+		// Now that the HTTP server is running, we can start the HTTPS server
+		https_server := &http.Server{
 			Addr:      fmt.Sprintf(":%d", config.getPort()),
 			TLSConfig: LoadTLSCerts(config.getCertFile(), config.getKeyFile()),
 		}
-		err = server.ListenAndServeTLS("", "")
+		https_err := https_server.ListenAndServeTLS("", "")
+		if https_err != nil {
+			panic(fmt.Sprintf("HTTPS Web Server Error: [%s]", https_err.Error()))
+		}
 	} else {
+		/* This is a purely debugging path - if you're running locally, you might not
+		bother serving HTTPS. To support this, we have an http-only path defined here. */
 		klog.Warning("No certificate data for TLS provided, falling back to serving unsecured endpoints...")
-		klog.Warningf("Received path [%s] to cert file", config.getCertFile())
-		klog.Warningf("Received path [%s] to key file", config.getKeyFile())
+		klog.Warningf("Received path [%s] to cert file", config.getCertFile()) // in case you _expected_ to see a cert file
+		klog.Warningf("Received path [%s] to key file", config.getKeyFile())   // in case you _expected_ to see a key file
 		server := &http.Server{
 			Addr: fmt.Sprintf(":%d", config.getPort()),
 		}
-		err = server.ListenAndServe()
-	}
-	if err != nil {
-		panic(err)
+		err := server.ListenAndServe()
+		if err != nil {
+			panic(err)
+		}
 	}
 }

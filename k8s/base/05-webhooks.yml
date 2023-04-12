@@ -1,0 +1,115 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: k8s-cloud-system
+  labels:
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: webhook-server
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
+webhooks:
+  - name: no-default-namespaced-resources.k8s-cloud-system.k8s.mrll.com
+    admissionReviewVersions: ["v1", "v1beta1"]
+    namespaceSelector:
+      matchExpressions:
+        - key: "control-plane"
+          operator: "NotIn"
+          values: ["true"]
+        - key: "k8s.mrll.com/no-webhooks"
+          operator: "NotIn"
+          values: ["true", "True"]
+        - key: "k8s-cloud-system-managed"
+          operator: "NotIn"
+          values: ["true", "True"]
+        - key: "kubernetes.io/metadata.name"
+          operator: "In"
+          values: ["default"]
+    matchPolicy: Equivalent
+    timeoutSeconds: 5
+    failurePolicy: Fail
+    sideEffects: None
+    clientConfig:
+      caBundle: ""
+      service:
+        namespace: k8s-cloud-system
+        name: k8s-cloud-system
+        path: /no-default-namespace
+    rules:
+      - operations:
+          - "CREATE"
+          - "UPDATE"
+        apiGroups:
+          - "apps"
+          - "authorization.k8s.io"
+          - "batch"
+          - "extensions"
+          - "networking.k8s.io"
+        apiVersions:
+          - "v1"
+          - "v1/beta1"
+          - "v1/beta2"
+        resources:
+          - "*"
+        scope: Namespaced
+      - operations:
+          - "CREATE"
+          - "UPDATE"
+        apiGroups:
+          - ""
+        apiVersions:
+          - "v1"
+        resources:
+          - "bindings"
+          - "configmaps"
+          - "persistentvolumeclaims"
+          - "pods"
+          - "podtemplates"
+          - "secrets"
+          - "serviceaccounts"
+          - "services"
+          - "jobs"
+          - "cronjobs"
+        scope: Namespaced
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: k8s-cloud-system
+  labels:
+    app.kubernetes.io/name: k8s-cloud-system
+    app.kubernetes.io/version: "0.0.1"
+    app.kubernetes.io/commponent: webhook-server
+    app.kubernetes.io/part-of: k8s-cloud-system
+    app.kubernetes.io/managed-by: kubectl
+webhooks:
+  - name: no-external-ip-load-balancers.k8s-cloud-system.k8s.mrll.com
+    admissionReviewVersions: ["v1", "v1beta1"]
+    namespaceSelector:
+      matchExpressions:
+        - key: "control-plane"
+          operator: "NotIn"
+          values: ["true"]
+    matchPolicy: Equivalent
+    timeoutSeconds: 5
+    failurePolicy: Ignore
+    sideEffects: None
+    clientConfig:
+      caBundle: ""
+      service:
+        namespace: k8s-cloud-system
+        name: k8s-cloud-system
+        path: /no-external-ip-load-balancers
+    rules:
+      - operations:
+          - "CREATE"
+          - "UPDATE"
+        apiGroups:
+          - ""
+        apiVersions:
+          - "v1"
+        resources:
+          - "services"
+        scope: Namespaced

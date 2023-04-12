@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 01-rbac.yml
+  - 02-cert-job.yml
+  - 03-deployment.yml
+  - 04-external-network.yml
+  - 05-webhooks.yml
