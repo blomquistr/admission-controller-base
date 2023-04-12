@@ -23,15 +23,18 @@ type IConfig interface {
 	setKeyFile(keyFile string)
 	getMessage() string
 	setMessage(message string)
-	getPort() int
-	setPort(port int)
+	getHttpPort() int
+	setHttpPort(port int)
+	getHttpsPort() int
+	setHttpsPort(port int)
 }
 
 type Config struct {
-	CertFile string
-	KeyFile  string
-	Message  string
-	Port     int
+	CertFile  string
+	KeyFile   string
+	Message   string
+	HttpPort  int
+	HttpsPort int
 }
 
 func (c *Config) getCertFile() string {
@@ -58,21 +61,30 @@ func (c *Config) setMessage(message string) {
 	c.Message = message
 }
 
-func (c *Config) getPort() int {
-	return c.Port
+func (c *Config) getHttpPort() int {
+	return c.HttpPort
 }
 
-func (c *Config) setPort(port int) {
-	c.Port = port
+func (c *Config) setHttpPort(port int) {
+	c.HttpPort = port
+}
+
+func (c *Config) getHttpsPort() int {
+	return c.HttpsPort
+}
+
+func (c *Config) setHttpsPort(port int) {
+	c.HttpsPort = port
 }
 
 func newConfig() IConfig {
 	// set viper config defaults
 	return &Config{
-		CertFile: viper.GetString("certFile"),
-		KeyFile:  viper.GetString("keyFile"),
-		Message:  viper.GetString("message"),
-		Port:     viper.GetInt("port"),
+		CertFile:  viper.GetString("certFile"),
+		KeyFile:   viper.GetString("keyFile"),
+		Message:   viper.GetString("message"),
+		HttpPort:  viper.GetInt("http-port"),
+		HttpsPort: viper.GetInt("https-port"),
 	}
 }
 

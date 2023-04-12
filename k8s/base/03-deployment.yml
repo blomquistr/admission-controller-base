@@ -13,7 +13,8 @@ metadata:
 data:
   WEBHOOK_CERT_FILE_PATH: "/etc/webhook/certs/cert"
   WEBHOOK_KEY_FILE_PATH: "/etc/webhook/certs/key"
-  WEBHOOK_PORT: "5000"
+  WEBHOOK_HTTP_PORT: "8080"
+  WEBHOOK_HTTPS_PORT: "8443"
   WEBHOOK_MESSAGE: "Hello, there!"
 
 ---
@@ -58,7 +59,7 @@ spec:
             secretName: k8s-cloud-system-webhook-ca-bundle
       containers:
         - name: webhook-server
-          image: localhost:5001/admission-controller-base/webhook-server-debug:ec967ea-dirty
+          image: localhost:5001/admission-controller-base/webhook-server-debug:f958fee
           # livenessProbe:
           #   httpGet:
           #     path: /ping
@@ -93,7 +94,8 @@ spec:
               mountPath: /etc/webhook/certs
               readOnly: true
           ports:
-            - containerPort: 5000
+            - containerPort: 8080
+            - containerPort: 8443
             - containerPort: 443
             - containerPort: 80
           # command: ["bash", "-c", "while true; do clear; sleep 60000; done"]
@@ -124,11 +126,13 @@ spec:
     app.kubernetes.io/part-of: k8s-cloud-system
     app.kubernetes.io/managed-by: kubectl
   ports:
-    - port: 5000
-      name: k8s-cloud-system
+    - port: 8080
+      name: k8s-cloud-system-http
+    - port: 8443
+      name: k8s-cloud-system-https
     - port: 443
-      targetPort: 5000
+      targetPort: 8443
       name: https
     - port: 80
-      targetPort: 5000
+      targetPort: 8080
       name: http

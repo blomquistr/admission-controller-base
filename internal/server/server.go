@@ -55,7 +55,8 @@ func printConfig() {
 	klog.Infof("CertFile: [%s]", config.getCertFile())
 	klog.Infof("KeyFile: [%s]", config.getKeyFile())
 	klog.Infof("Message: [%s]", config.getMessage())
-	klog.Infof("Port: [%d]", config.getPort())
+	klog.Infof("HTTP Server Port: [%d]", config.getHttpPort())
+	klog.Infof("HTTPS Server Port: [%d]", config.getHttpsPort())
 }
 
 func Run() {
@@ -95,7 +96,7 @@ func Run() {
 		klog.Info("Certificate infromation identified, serving with TLS enabled...")
 		go func() {
 			http_server := &http.Server{
-				Addr: fmt.Sprintf(":%d", config.getPort()),
+				Addr: fmt.Sprintf(":%d", config.getHttpPort()),
 			}
 			http_err := http_server.ListenAndServe()
 			if http_err != nil {
@@ -104,7 +105,7 @@ func Run() {
 		}()
 		// Now that the HTTP server is running, we can start the HTTPS server
 		https_server := &http.Server{
-			Addr:      fmt.Sprintf(":%d", config.getPort()),
+			Addr:      fmt.Sprintf(":%d", config.getHttpsPort()),
 			TLSConfig: LoadTLSCerts(config.getCertFile(), config.getKeyFile()),
 		}
 		https_err := https_server.ListenAndServeTLS("", "")
@@ -118,7 +119,7 @@ func Run() {
 		klog.Warningf("Received path [%s] to cert file", config.getCertFile()) // in case you _expected_ to see a cert file
 		klog.Warningf("Received path [%s] to key file", config.getKeyFile())   // in case you _expected_ to see a key file
 		server := &http.Server{
-			Addr: fmt.Sprintf(":%d", config.getPort()),
+			Addr: fmt.Sprintf(":%d", config.getHttpPort()),
 		}
 		err := server.ListenAndServe()
 		if err != nil {

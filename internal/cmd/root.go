@@ -18,7 +18,8 @@ var (
 	certFile     string
 	keyFile      string
 	message      string
-	port         int
+	httpPort     int    = 8080
+	httpsPort    int    = 8443
 	configPrefix string = "webhook"
 
 	// the actual command
@@ -61,11 +62,17 @@ func init() {
 	viper.BindEnv("keyFile", fmt.Sprintf("%s_KEY_FILE_PATH", strings.ToUpper(configPrefix)))
 	viper.SetDefault("keyFile", "")
 
-	// flag port - the port the app should listen on in its environment
-	rootCmd.PersistentFlags().IntVar(&port, "port", 5001, "A port to run the server on (defaults to 5001)")
-	viper.BindPFlag("port", rootCmd.PersistentFlags().Lookup("port"))
-	viper.BindEnv("port", fmt.Sprintf("%s_PORT", strings.ToUpper(configPrefix)))
-	viper.SetDefault("port", 5001)
+	// flag http-port - the port the app should listen on in its environment
+	rootCmd.PersistentFlags().IntVar(&httpPort, "http-port", 8080, "A port to run the server on (defaults to 5001)")
+	viper.BindPFlag("http-port", rootCmd.PersistentFlags().Lookup("http-port"))
+	viper.BindEnv("http-port", fmt.Sprintf("%s_HTTP_PORT", strings.ToUpper(configPrefix)))
+	viper.SetDefault("http-port", 5001)
+
+	// flag https-port - the port the app should listen on in its environment
+	rootCmd.PersistentFlags().IntVar(&httpsPort, "http-port", 8443, "A port to run the server on (defaults to 5001)")
+	viper.BindPFlag("https-port", rootCmd.PersistentFlags().Lookup("https-port"))
+	viper.BindEnv("https-port", fmt.Sprintf("%s_HTTPS_PORT", strings.ToUpper(configPrefix)))
+	viper.SetDefault("https-port", 8443)
 
 	// flag message - a test message for passing around the app, basically hello-world for configuration in Viper and Cobra
 	rootCmd.PersistentFlags().StringVar(&message, "message", "Hello, World!", "A message to pass to the application's test endpoint to validate that it is working")
