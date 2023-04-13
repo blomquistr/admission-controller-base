@@ -1,0 +1,7 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: k8s-cloud-system
+spec:
+  minAvailable: 0

@@ -30,7 +30,7 @@ metadata:
     app.kubernetes.io/part-of: k8s-cloud-system
     app.kubernetes.io/managed-by: kubectl
 spec:
-  replicas: 1
+  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -59,7 +59,7 @@ spec:
             secretName: k8s-cloud-system-webhook-ca-bundle
       containers:
         - name: webhook-server
-          image: localhost:5001/admission-controller-base/webhook-server-debug:dc67cc7
+          image: localhost:5001/admission-controller-base/webhook-server-debug:5a58247-dirty
           livenessProbe:
             httpGet:
               path: /ping
@@ -81,7 +81,7 @@ spec:
               cpu: "500m"
           envFrom:
             - configMapRef:
-                name: k8s-cloud-system
+                name: k8s-cloud-system-webhook-server
           env:
             - name: CLUSTER_WEBHOOK_CA_BUNDLE
               valueFrom:
