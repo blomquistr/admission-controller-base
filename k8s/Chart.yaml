@@ -3,7 +3,7 @@ apiVersion: v2
 name: admission-controller-base
 version: 0.0.1
 appVersion: 0.0.1
-kubeVersion: 1.26.3
+kubeVersion: ">= 1.22.0" # must be newer than the latest Webhook deprecations in 1.22
 description: A Helm chart to deploy the admission controller
 type: application
 keywords:
@@ -13,11 +13,14 @@ keywords:
 home: https://github.com/blomquistr/admission-controller-base
 sources:
   - https://github.com/blomquistr/admission-controller-base
-dependencies:
-  - name: ingress-nginx
-    version: 4.6.0
-    repository: https://kubernetes.github.io/ingress-nginx
-    condition: ingress-nginx.enabled
+## An example dependency: there is not a hard requirement for ingress-nginx
+## with the mutating admission controller but it makes a good example for
+## other charts and it's a nice to have addition.
+# dependencies:
+#   - name: ingress-nginx
+#     version: 4.6.0
+#     repository: https://kubernetes.github.io/ingress-nginx
+#     condition: ingress-nginx.enabled
 maintainers:
   - name: Ryan Blomquist
     email: blomquist.r@gmail.com
