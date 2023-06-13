@@ -37,3 +37,4 @@ COPY --from=builder --chown=$UID:$GID $WORKDIR/bin/* $WORKDIR/bin/
 USER $UID
 
 ENTRYPOINT [ "bin/webhook-server.exe --cert-file $WEBHOOK_CERT_FILE_PATH --key-file $WEBHOOK_KEY_FILE_PATH --message $WEBHOOK_MESSAGE" ]
+
