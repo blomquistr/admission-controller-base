@@ -19,8 +19,11 @@ Tracking each feature we have implemented in Python that we need to implement in
 
 - [ ] Add new webhooks via code generation and a plugin architecture
 - [ ] Add endpoints to enable and disable all webhooks handled by the server
+- [ ] Alerting to external communications channels in addition to the response to `kubectl`
+  - [ ] Slack (implemented in our admission controller in Python)
 
 ### Net-new Improvements
 
 - [ ] A Helm chart for deployment
-- [ ] Deploy with Kustomize instead of in-house templating logic
+- [X] Deploy with Kustomize instead of in-house templating logic
+- [ ] BATS tests baked into the deployment via a CronJob and a BATS test script
